@@ -1,4 +1,4 @@
-# dshfloat-bridge：把 host 里的活会话状态写给悬浮窗。
+# dsh-whaleling：把 host 里的活会话状态写给悬浮窗。
 - insert:
     - id: dshfloat-bridge
-      name: '@local/dshfloat-bridge'
+      name: dsh-whaleling
