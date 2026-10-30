@@ -24,7 +24,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rUrU516/dsh-whaleling.git",
-    "directory": "bundles/dshfloat-bridge"
+    "directory": "bundles/dsh-whaleling"
   },
   "engines": {
     "dsh": ">=0.2.0 <0.3.0"
