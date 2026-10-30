@@ -32,3 +32,27 @@ dsh plugin --profile desktop add /absolute/path/to/bundles/dshfloat-bridge
 ```
 
 The widget falls back to reading `~/.dsh/sessions` directly when the bridge is absent.
+
+## Releasing
+
+The bridge is published to npm under one name, `dsh-whaleling`. There is no separate
+dev package: the local checkout is installed with `dsh plugin add <path>` (a pnpm link),
+so edits take effect immediately and never reach the registry until you publish.
+
+```sh
+cd bundles/dsh-whaleling
+npm version patch          # 0.1.0 -> 0.1.1
+npm publish
+cd ../..
+git push --follow-tags origin public-export:main
+```
+
+The widget is shipped separately as a GitHub Release asset:
+
+```sh
+cd float-icon
+./build.sh
+codesign --force --deep -s - build/DshFloat.app   # ad-hoc; users still need right-click → Open
+ditto -c -k --keepParent build/DshFloat.app DshFloat.zip
+gh release create v0.1.1 DshFloat.zip --title v0.1.1 --notes "..."
+```
