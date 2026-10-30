@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "DshFloat Bridge",
-    "description": "把当前活跃会话状态写到 ~/.dsh/dshfloat-bridge.json，供悬浮窗读取。"
+    "title": "Whaleling Bridge",
+    "description": "把当前活跃会话状态写到 ~/.dsh/dshfloat-bridge.json，供悬浮鲸鱼读取。"
   }
 }
