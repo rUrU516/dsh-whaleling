@@ -1,0 +1,6 @@
+# hello-dice：一个最小的 Host 插件 bundle。
+# 只做一件事——往工具表里注册 roll_dice，用来验证
+# 「写插件 → 装进 profile → 模型能调用」这条链路。
+- insert:
+    - id: hello-dice
+      name: '@local/hello-dice'

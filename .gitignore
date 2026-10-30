@@ -1,0 +1,10 @@
+# 编译产物与临时截图
+build/
+*.log
+.DS_Store
+design/.chrome/
+float-icon/design/.chrome*/
+
+agent-context/
+float-icon/design/.chrome*/
+float-icon/build/

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Hello Dice",
+    "description": "给 Agent 加一个 roll_dice 工具，可以掷骰子。"
+  }
+}

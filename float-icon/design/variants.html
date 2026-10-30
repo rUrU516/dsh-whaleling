@@ -1,0 +1,86 @@
+<!doctype html><html lang="zh"><head><meta charset="utf-8"><style>
+*{box-sizing:border-box}
+body{margin:0;padding:26px 30px;background:#0e1014;color:#e8eaf0;
+     font:12px/1.5 -apple-system,"PingFang SC",sans-serif;-webkit-font-smoothing:antialiased}
+h1{font-size:16px;margin:0 0 4px;font-weight:600}
+.note{color:#7d8496;margin:0 0 20px;font-size:11px}
+.grid{display:grid;grid-template-columns:repeat(2,max-content);gap:16px}
+.card{background:#15181f;border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px}
+.card h2{font-size:11px;margin:0 0 8px;font-weight:600;color:#cfd4e0}
+.card h2 b{color:#7c86a0;margin-right:5px}
+.stages{display:flex;gap:8px}
+.stage{width:216px;height:216px;border-radius:9px;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center}
+.stage.dark{background:radial-gradient(120% 120% at 50% 40%,#23262f,#101216 80%)}
+.stage.light{background:radial-gradient(120% 120% at 50% 40%,#f6f7fa,#dde1e9 80%)}
+.scaler{transform:scale(2)}
+.w{position:relative;width:108px;height:108px}
+.whale{position:absolute;left:50%;top:50%;width:66px;transform:translate(-50%,-50%);
+       filter:drop-shadow(0 0 5px rgba(77,107,254,.55))}
+.bub{position:absolute;left:27px;top:62px;width:6px;height:6px}
+.bub i{position:absolute;width:9px;height:9px;background:url("assets/bubble.png") center/contain no-repeat;
+       opacity:0;animation:rise 2.4s linear infinite}
+.bub i:nth-child(2){animation-delay:.7s}.bub i:nth-child(3){animation-delay:1.3s}
+@keyframes rise{0%{transform:translate(0,0) scale(.5);opacity:0}15%{opacity:1}70%{opacity:.5}100%{transform:translate(-7px,-28px) scale(1.1);opacity:0}}
+.val{position:absolute;left:0;right:0;text-align:center;white-space:nowrap}
+
+/* 1 弱化胶囊：更小、更薄、无边框 */
+.v1 .val{bottom:6px;left:50%;right:auto;transform:translateX(-50%);
+  padding:2px 6px;border-radius:6.5px;background:rgba(77,107,254,.72);
+  font-family:-apple-system,"SF Pro Text";font-size:9px;font-weight:500;letter-spacing:.2px;
+  color:rgba(255,255,255,.95);font-variant-numeric:tabular-nums}
+/* 2 贴合：上沿压进鲸鱼尾部 2pt，实底、细高光边 */
+.v2 .val{bottom:4px;left:50%;right:auto;transform:translateX(-50%);
+  padding:2px 7px 2.5px;border-radius:7px;background:rgba(77,107,254,.95);
+  border:.5px solid rgba(255,255,255,.28);
+  font-family:-apple-system,"SF Pro Text";font-size:9px;font-weight:600;letter-spacing:.2px;
+  color:#fff;font-variant-numeric:tabular-nums}
+/* 3 无容器：靠发光和鲸鱼连在一起 */
+.v3 .val{bottom:8px;font-family:-apple-system,"SF Pro Text";font-size:9.5px;font-weight:500;
+  letter-spacing:.3px;color:rgba(255,255,255,.92);
+  text-shadow:0 0 7px rgba(77,107,254,.95),0 0 14px rgba(77,107,254,.55)}
+.light .v3 .val{color:#1a2030;text-shadow:0 0 7px rgba(255,255,255,.9)}
+/* 4 底座：宽度对齐鲸鱼，像铭牌 */
+.v4 .val{bottom:3px;left:50%;right:auto;transform:translateX(-50%);width:54px;
+  padding:2px 0 2.5px;border-radius:4px;background:rgba(77,107,254,.88);
+  font-family:-apple-system,"SF Pro Text";font-size:9px;font-weight:600;letter-spacing:.1px;
+  color:#fff;font-variant-numeric:tabular-nums}
+.tag{position:absolute;top:5px;left:7px;font-size:8px;color:#5f6675;letter-spacing:.6px}
+.light .tag{color:#98a0b0}
+</style></head><body>
+<h1>token 徽标 · 贴合鲸鱼的四版</h1>
+<p class="note">全部 2× 放大；左边深色背景、右边浅色背景。字体统一用 SF Pro Text（锐利、等宽数字），不再用圆体。</p>
+<div class="grid">
+
+<div class="card"><h2><b>1</b>弱化胶囊</h2>
+ <div class="stages">
+  <div class="stage dark"><span class="tag">DARK</span><div class="scaler"><div class="w v1">
+    <img class="whale" src="assets/whale.png"><div class="bub"><i></i><i></i><i></i></div><div class="val">719.1M</div></div></div></div>
+  <div class="stage light"><span class="tag">LIGHT</span><div class="scaler"><div class="w v1">
+    <img class="whale" src="assets/whale.png"><div class="bub"><i></i><i></i><i></i></div><div class="val">719.1M</div></div></div></div>
+ </div></div>
+
+<div class="card"><h2><b>2</b>贴合（压进下沿）</h2>
+ <div class="stages">
+  <div class="stage dark"><span class="tag">DARK</span><div class="scaler"><div class="w v2">
+    <img class="whale" src="assets/whale.png"><div class="bub"><i></i><i></i><i></i></div><div class="val">719.1M</div></div></div></div>
+  <div class="stage light"><span class="tag">LIGHT</span><div class="scaler"><div class="w v2">
+    <img class="whale" src="assets/whale.png"><div class="bub"><i></i><i></i><i></i></div><div class="val">719.1M</div></div></div></div>
+ </div></div>
+
+<div class="card"><h2><b>3</b>无容器（靠光连）</h2>
+ <div class="stages">
+  <div class="stage dark"><span class="tag">DARK</span><div class="scaler"><div class="w v3">
+    <img class="whale" src="assets/whale.png"><div class="bub"><i></i><i></i><i></i></div><div class="val">719.1M</div></div></div></div>
+  <div class="stage light"><span class="tag">LIGHT</span><div class="scaler"><div class="w v3">
+    <img class="whale" src="assets/whale.png"><div class="bub"><i></i><i></i><i></i></div><div class="val">719.1M</div></div></div></div>
+ </div></div>
+
+<div class="card"><h2><b>4</b>底座（宽度对齐鲸鱼）</h2>
+ <div class="stages">
+  <div class="stage dark"><span class="tag">DARK</span><div class="scaler"><div class="w v4">
+    <img class="whale" src="assets/whale.png"><div class="bub"><i></i><i></i><i></i></div><div class="val">719.1M</div></div></div></div>
+  <div class="stage light"><span class="tag">LIGHT</span><div class="scaler"><div class="w v4">
+    <img class="whale" src="assets/whale.png"><div class="bub"><i></i><i></i><i></i></div><div class="val">719.1M</div></div></div></div>
+ </div></div>
+
+</div></body></html>

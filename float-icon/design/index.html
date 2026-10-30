@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>今日 token 显示 · 风格候选</title>
+<style>
+  :root {
+    --brand: 77, 107, 254;
+    --value: 680.2M;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px 44px 56px;
+    background: #0e1014;
+    color: #e8eaf0;
+    font: 13px/1.6 -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 20px; font-weight: 600; margin: 0 0 6px; letter-spacing: .2px; }
+  .note { color: #8b90a0; margin: 0 0 34px; font-size: 12px; }
+  .note code { color: #b9bfd0; background: rgba(255,255,255,.06); padding: 1px 5px; border-radius: 4px; }
+
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .card {
+    background: #15181f; border: 1px solid rgba(255,255,255,.07);
+    border-radius: 14px; padding: 16px 16px 14px;
+  }
+  .card h2 { font-size: 12px; font-weight: 600; margin: 0 0 4px; letter-spacing: .3px; }
+  .card h2 span { color: #6f7688; font-weight: 500; margin-right: 6px; }
+  .card p { font-size: 11px; color: #7d8496; margin: 10px 0 0; line-height: 1.5; }
+
+  .stages { display: flex; gap: 10px; margin-top: 12px; }
+  .stage {
+    flex: 1; height: 128px; border-radius: 10px; position: relative;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+  .stage.dark  { background: radial-gradient(120% 120% at 50% 40%, #23262f 0%, #101216 80%); }
+  .stage.light { background: radial-gradient(120% 120% at 50% 40%, #f4f5f8 0%, #dfe2ea 80%); }
+  .tag { position: absolute; top: 6px; left: 8px; font-size: 9px; color: #6b7280; letter-spacing: .5px; }
+  .light .tag { color: #9aa1b2; }
+
+  /* ── 悬浮件本体 ─────────────────────────────── */
+  .widget { position: relative; width: 108px; height: 108px; }
+  .whale {
+    position: absolute; left: 50%; top: 50%;
+    width: 66px; transform: translate(-50%, -50%);
+    image-rendering: auto;
+    filter: drop-shadow(0 0 5px rgba(var(--brand), .45));
+    animation: breathe 3.2s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%, 100% { filter: drop-shadow(0 0 4px rgba(var(--brand), .30)); }
+    50%      { filter: drop-shadow(0 0 10px rgba(var(--brand), .85)); }
+  }
+  .bubbles { position: absolute; left: 27px; top: 62px; width: 6px; height: 6px; }
+  .bubbles i {
+    position: absolute; width: 9px; height: 9px; left: 0; top: 0;
+    background: url("assets/bubble.png") center/contain no-repeat;
+    opacity: 0; animation: rise 2.4s linear infinite;
+  }
+  .bubbles i:nth-child(1) { animation-delay: 0s; }
+  .bubbles i:nth-child(2) { animation-delay: .6s; }
+  .bubbles i:nth-child(3) { animation-delay: 1.15s; }
+  .bubbles i:nth-child(4) { animation-delay: 1.7s; }
+  @keyframes rise {
+    0%   { transform: translate(0, 0) scale(.5); opacity: 0; }
+    15%  { opacity: 1; }
+    70%  { opacity: .55; }
+    100% { transform: translate(-7px, -30px) scale(1.15); opacity: 0; }
+  }
+
+  /* ── 六种数值样式 ───────────────────────────── */
+  .value { position: absolute; left: 0; right: 0; text-align: center; }
+
+  /* A 现状：底部纯文字 */
+  .v-a .value {
+    bottom: 3px; font-size: 10px; font-weight: 500;
+    color: rgba(255,255,255,.78); letter-spacing: .2px;
+  }
+  .light .v-a .value { color: rgba(20,24,34,.72); }
+
+  /* B 胶囊 */
+  .v-b .value {
+    bottom: 2px; left: 50%; right: auto; transform: translateX(-50%);
+    padding: 2px 8px 3px; border-radius: 8px;
+    font-size: 9.5px; font-weight: 600; letter-spacing: .3px;
+    color: rgba(255,255,255,.92);
+    background: rgba(255,255,255,.09);
+    border: .5px solid rgba(255,255,255,.16);
+    backdrop-filter: blur(6px);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .light .v-b .value {
+    color: rgba(18,22,32,.82); background: rgba(255,255,255,.7);
+    border-color: rgba(20,24,34,.12);
+  }
+
+  /* C 双行：数字 + 标签 */
+  .v-c .value { bottom: 4px; }
+  .v-c .num {
+    display: block; font-size: 12px; font-weight: 600; letter-spacing: .1px;
+    color: rgba(255,255,255,.92); font-variant-numeric: tabular-nums;
+  }
+  .v-c .cap {
+    display: block; font-size: 7px; letter-spacing: 1.1px; margin-top: -1px;
+    color: rgba(255,255,255,.42);
+  }
+  .light .v-c .num { color: rgba(18,22,32,.86); }
+  .light .v-c .cap { color: rgba(18,22,32,.45); }
+
+  /* D 右侧徽章（窗口变宽） */
+  .v-d { width: 150px; }
+  .v-d .whale { left: 42px; }
+  .v-d .bubbles { left: 19px; }
+  .v-d .value {
+    left: auto; right: 6px; top: 50%; transform: translateY(-50%);
+    font-size: 12px; font-weight: 600; letter-spacing: .1px;
+    color: rgba(255,255,255,.9); font-variant-numeric: tabular-nums;
+  }
+  .light .v-d .value { color: rgba(18,22,32,.84); }
+
+  /* E 等宽读数 */
+  .v-e .value {
+    bottom: 4px; font-family: "SF Mono", Menlo, monospace;
+    font-size: 9px; letter-spacing: .6px;
+    color: rgba(255,255,255,.58);
+  }
+  .light .v-e .value { color: rgba(18,22,32,.55); }
+
+  /* F 仪表环 + 小字 */
+  .v-f .ring {
+    position: absolute; inset: 6px; border-radius: 50%;
+    background: conic-gradient(from -90deg,
+      rgba(var(--brand), .9) 0deg,
+      rgba(var(--brand), .9) 245deg,
+      rgba(255,255,255,.10) 245deg,
+      rgba(255,255,255,.10) 360deg);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.6px), #000 calc(100% - 1.4px));
+            mask: radial-gradient(farthest-side, transparent calc(100% - 1.6px), #000 calc(100% - 1.4px));
+    animation: ringpulse 3.2s ease-in-out infinite;
+  }
+  @keyframes ringpulse { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+  .v-f .value {
+    bottom: 6px; font-size: 9.5px; font-weight: 500;
+    color: rgba(255,255,255,.8); letter-spacing: .2px;
+    font-variant-numeric: tabular-nums;
+  }
+  .light .v-f .value { color: rgba(18,22,32,.75); }
+  .light .v-f .ring {
+    background: conic-gradient(from -90deg,
+      rgba(var(--brand), .95) 0deg, rgba(var(--brand), .95) 245deg,
+      rgba(20,24,34,.12) 245deg, rgba(20,24,34,.12) 360deg);
+  }
+</style>
+</head>
+<body>
+  <h1>今日 token · 显示风格候选</h1>
+  <p class="note">
+    口径固定：本地自然日 00:00 起、全部工作区、只显示总数（<code>1.2k / 215.2M / 1.3B</code>，一位小数）。
+    每张卡左边是深色背景、右边是浅色背景——白字在浅色上会消失，必须一起看。
+  </p>
+
+  <div class="grid">
+
+    <article class="card">
+      <h2><span>A</span>纯文字（现在的样子）</h2>
+      <div class="stages">
+        <div class="stage dark">
+          <span class="tag">DARK</span>
+          <div class="widget v-a">
+            <img class="whale" src="assets/whale.png" alt="">
+            <div class="bubbles"><i></i><i></i><i></i><i></i></div>
+            <div class="value">680.2M</div>
+          </div>
+        </div>
+        <div class="stage light">
+          <span class="tag">LIGHT</span>
+          <div class="widget v-a">
+            <img class="whale" src="assets/whale.png" alt="">
+            <div class="bubbles"><i></i><i></i><i></i><i></i></div>
+            <div class="value">680.2M</div>
+          </div>
+        </div>
+      </div>
+      <p>最省事，但像个贴上去的标签：字和鲸鱼没有关系，浅色背景上还得换色。</p>
+    </article>
+
+    <article class="card">
+      <h2><span>B</span>胶囊</h2>
+      <div class="stages">
+        <div class="stage dark">
+          <span class="tag">DARK</span>
+          <div class="widget v-b">
+            <img class="whale" src="assets/whale.png" alt="">
+            <div class="bubbles"><i></i><i></i><i></i><i></i></div>
+            <div class="value">680.2M</div>
+          </div>
+        </div>
+        <div class="stage light">
+          <span class="tag">LIGHT</span>
+          <div class="widget v-b">
+            <img class="whale" src="assets/whale.png" alt="">
+            <div class="bubbles"><i></i><i></i><i></i><i></i></div>
+            <div class="value">680.2M</div>
+          </div>
+        </div>
+      </div>
+      <p>有了"面"，数字不再飘着；深/浅色各用一套底色，两边都读得清。</p>
+    </article>
+
+    <article class="card">
+      <h2><span>C</span>双行：数字 + 标签</h2>
+      <div class="stages">
+        <div class="stage dark">
+          <span class="tag">DARK</span>
+          <div class="widget v-c">
+            <img class="whale" src="assets/whale.png" alt="">
+            <div class="bubbles"><i></i><i></i><i></i><i></i></div>
+            <div class="value"><span class="num">680.2M</span><span class="cap">TOKENS</span></div>
+          </div>
+        </div>
+        <div class="stage light">
+          <span class="tag">LIGHT</span>
+          <div class="widget v-c">
+            <img class="whale" src="assets/whale.png" alt="">
+            <div class="bubbles"><i></i><i></i><i></i><i></i></div>
+            <div class="value"><span class="num">680.2M</span><span class="cap">TOKENS</span></div>
+          </div>
+        </div>
+      </div>
+      <p>信息层级最清楚（大数字 + 一行说明），代价是多了一行英文小字。</p>
+    </article>
+
+    <article class="card">
+      <h2><span>D</span>右侧徽章</h2>
+      <div class="stages">
+        <div class="stage dark">
+          <span class="tag">DARK</span>
+          <div class="widget v-d">
+            <img class="whale" src="assets/whale.png" alt="">
+            <div class="bubbles"><i></i><i></i><i></i><i></i></div>
+            <div class="value">680.2M</div>
+          </div>
+        </div>
+        <div class="stage light">
+          <span class="tag">LIGHT</span>
+          <div class="widget v-d">
+            <img class="whale" src="assets/whale.png" alt="">
+            <div class="bubbles"><i></i><i></i><i></i><i></i></div>
+            <div class="value">680.2M</div>
+          </div>
+        </div>
+      </div>
+      <p>横向排，数字可以更大；但窗口从 108 变宽到 150，挡住的桌面更多。</p>
+    </article>
+
+    <article class="card">
+      <h2><span>E</span>等宽读数</h2>
+      <div class="stages">
+        <div class="stage dark">
+          <span class="tag">DARK</span>
+          <div class="widget v-e">
+            <img class="whale" src="assets/whale.png" alt="">
+            <div class="bubbles"><i></i><i></i><i></i><i></i></div>
+            <div class="value">680.2M</div>
+          </div>
+        </div>
+        <div class="stage light">
+          <span class="tag">LIGHT</span>
+          <div class="widget v-e">
+            <img class="whale" src="assets/whale.png" alt="">
+            <div class="bubbles"><i></i><i></i><i></i><i></i></div>
+            <div class="value">680.2M</div>
+          </div>
+        </div>
+      </div>
+      <p>数字逐位对齐、不跳动（数值变化时宽度稳定），气质更"仪表"，但也更冷。</p>
+    </article>
+
+    <article class="card">
+      <h2><span>F</span>仪表环</h2>
+      <div class="stages">
+        <div class="stage dark">
+          <span class="tag">DARK</span>
+          <div class="widget v-f">
+            <div class="ring"></div>
+            <img class="whale" src="assets/whale.png" alt="">
+            <div class="bubbles"><i></i><i></i><i></i><i></i></div>
+            <div class="value">680.2M</div>
+          </div>
+        </div>
+        <div class="stage light">
+          <span class="tag">LIGHT</span>
+          <div class="widget v-f">
+            <div class="ring"></div>
+            <img class="whale" src="assets/whale.png" alt="">
+            <div class="bubbles"><i></i><i></i><i></i><i></i></div>
+            <div class="value">680.2M</div>
+          </div>
+        </div>
+      </div>
+      <p>环按"1B 为满"画（现在约 68%）。代价：1B 这个上限是我编的，没有依据。</p>
+    </article>
+
+  </div>
+</body>
+</html>

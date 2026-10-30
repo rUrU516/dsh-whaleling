@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Hello Dice",
+    "description": "Adds a roll_dice tool so the agent can roll dice."
+  }
+}

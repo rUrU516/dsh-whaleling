@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>鲸鱼抱面板 · 动效草案 v2</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: #0a0c10;
+    font: 13px/1.6 -apple-system, "PingFang SC", sans-serif; color: #e8eaf0;
+    -webkit-font-smoothing: antialiased;
+    display: flex; flex-direction: column; align-items: center; padding: 26px 0 36px;
+  }
+  h1 { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+  .hint { color: #7d8496; font-size: 11.5px; margin: 0 0 16px; text-align: center; }
+
+  .stage {
+    position: relative; width: 620px; height: 580px; border-radius: 16px; overflow: hidden;
+    background:
+      radial-gradient(70% 60% at 28% 18%, #2b3444 0%, transparent 62%),
+      radial-gradient(60% 60% at 82% 82%, #223038 0%, transparent 62%),
+      linear-gradient(140deg, #1a1f27, #0f1217);
+  }
+  .fake-window {
+    position: absolute; left: 54px; top: 96px; width: 380px; height: 300px;
+    border-radius: 10px; padding: 18px;
+    background: linear-gradient(160deg, #f2f4f8, #dfe3ec);
+    color: #2a3140; font-size: 12px; line-height: 1.7;
+    box-shadow: 0 20px 50px rgba(0,0,0,.45);
+  }
+  .fake-window b { display: block; font-size: 13px; margin-bottom: 6px; }
+
+  /* 面板：边缘由鲸鱼的手臂画出来，所以自己不画边框 */
+  .panel {
+    position: absolute; left: 160px; top: 128px; width: 300px; height: 400px;
+    border-radius: 18px; overflow: hidden;
+    background: rgba(26,30,38,.62);
+    backdrop-filter: blur(26px) saturate(150%);
+    -webkit-backdrop-filter: blur(26px) saturate(150%);
+    box-shadow: 0 26px 60px rgba(0,0,0,.55);
+    opacity: 0; transform: scale(.985); transform-origin: 50% 0%;
+  }
+  .panel .content { padding: 22px 18px 18px; }
+  .row, .group { opacity: 0; transform: translateY(5px); }
+  .group {
+    display: flex; align-items: center; gap: 7px; height: 26px;
+    margin: 8px 0 2px; padding: 0 8px; font-size: 12px; color: rgba(255,255,255,.62);
+  }
+  .group svg { flex: none; }
+  .row {
+    display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px;
+    border-radius: 7px; font-size: 12.5px; color: rgba(255,255,255,.9);
+  }
+  .row .t { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .d { color: rgba(255,255,255,.42); font-size: 11px; }
+  .spin {
+    width: 13px; height: 13px; border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,.22); border-top-color: rgba(255,255,255,.75);
+    animation: spin 1.05s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .dot { width: 13px; }
+
+  /* 手臂（= 边框）画在最上层 */
+  .arms { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+  .arms path {
+    fill: none; stroke: rgba(122,152,255,.95); stroke-width: 1.7; stroke-linecap: round;
+    filter: drop-shadow(0 0 5px rgba(77,107,254,.45));
+  }
+
+  /* 鲸鱼：凸在面板顶边上方 */
+  .whale {
+    position: absolute; left: 310px; top: 62px; width: 66px; margin-left: -33px;
+    z-index: 3; transform-origin: 50% 50%;
+    filter: drop-shadow(0 0 7px rgba(77,107,254,.55));
+    cursor: pointer;
+  }
+
+  .controls { display: flex; gap: 10px; margin-top: 14px; align-items: center; }
+  button {
+    appearance: none; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.07);
+    color: #e8eaf0; padding: 7px 16px; border-radius: 8px; font-size: 12.5px; cursor: pointer;
+  }
+  button:hover { background: rgba(255,255,255,.12); }
+  label { font-size: 12px; color: #8b90a0; display: flex; gap: 6px; align-items: center; }
+</style>
+</head>
+<body>
+  <h1>鲸鱼抱住面板</h1>
+  <p class="hint">鲸鱼留在顶部正中、凸出面板；展开时它的两侧伸出去，绕着面板走一圈把边"包"出来。<br>点鲸鱼或下方按钮开合。</p>
+
+  <div class="stage">
+    <div class="fake-window">
+      <b>背后的窗口</b>
+      面板打开后这块应该被模糊，而不是被遮住。<br>
+      手臂画出的边贴着玻璃边缘，像鲸鱼把它抱住。
+    </div>
+
+    <div class="panel" id="panel">
+      <div class="content" id="rows"></div>
+    </div>
+
+    <svg class="arms" viewBox="0 0 620 580">
+      <!-- 左臂：从鲸鱼左侧 → 面板左上 → 左边 → 左下圆角 → 底部中央 -->
+      <path id="armL" d="M 292 116
+        C 236 120, 176 130, 160 148
+        L 160 510
+        Q 160 528 178 528
+        L 310 528" />
+      <!-- 右臂：镜像 -->
+      <path id="armR" d="M 328 116
+        C 384 120, 444 130, 460 148
+        L 460 510
+        Q 460 528 442 528
+        L 310 528" />
+    </svg>
+
+    <img class="whale" id="whale" src="assets/whale.png" alt="">
+  </div>
+
+  <div class="controls">
+    <button id="play">重新播放</button>
+    <label><input type="checkbox" id="loop"> 循环</label>
+  </div>
+
+<script>
+const panel = document.getElementById('panel');
+const whale = document.getElementById('whale');
+const rowsBox = document.getElementById('rows');
+const armL = document.getElementById('armL');
+const armR = document.getElementById('armR');
+
+// 列表
+const data = [
+  { group: 'dsh-plugin' },
+  { t: '插件进度与创造模式', d: '刚刚', active: true },
+  { t: '你好', d: '5小时' },
+  { t: '快捷键唤起悬浮聊天窗', d: '1天' },
+  { group: 'argus-algorithms' },
+  { t: '当前项目进度确认', d: '3分钟' },
+  { t: '在么?', d: '6小时' },
+  { t: '问候', d: '11小时' },
+  { group: 'feo' },
+  { t: '理解固定视角视频检测指令', d: '7小时' },
+];
+for (const r of data) {
+  if (r.group) {
+    const el = document.createElement('div');
+    el.className = 'group';
+    el.innerHTML = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+       stroke="currentColor" stroke-width="1.15" stroke-linejoin="round">
+       <path d="M1.6 3.7V10.8H5.1L6.5 9H12.4V3.7Z"/><path d="M0.9 6.7H10.2L12.5 2.7H3.2Z"/></svg>
+       <span>${r.group}</span>`;
+    rowsBox.appendChild(el);
+  } else {
+    const el = document.createElement('div');
+    el.className = 'row';
+    el.innerHTML = `<div class="dot">${r.active ? '<div class="spin"></div>' : ''}</div>
+                    <div class="t">${r.t}</div><div class="d">${r.d}</div>`;
+    rowsBox.appendChild(el);
+  }
+}
+const items = [...rowsBox.children];
+
+// 两条手臂的描边长度
+for (const p of [armL, armR]) {
+  const L = p.getTotalLength();
+  p.style.strokeDasharray = `${L}`;
+  p.style.strokeDashoffset = `${L}`;
+  p.dataset.len = L;
+}
+
+const T = { pop: 140, arms: 620, glass: 300, content: 240 };
+
+function reset() {
+  panel.style.transition = 'none';
+  panel.style.opacity = 0;
+  panel.style.transform = 'scale(.985)';
+  for (const p of [armL, armR]) {
+    p.style.transition = 'none';
+    p.style.strokeDashoffset = p.dataset.len;
+    p.style.stroke = 'rgba(122,152,255,.95)';
+    p.style.strokeWidth = '1.7';
+    p.style.filter = 'drop-shadow(0 0 5px rgba(77,107,254,.45))';
+  }
+  whale.style.transition = 'none';
+  whale.style.transform = 'scale(1)';
+  whale.style.filter = 'drop-shadow(0 0 7px rgba(77,107,254,.55))';
+  items.forEach(el => { el.style.transition = 'none'; el.style.opacity = 0; el.style.transform = 'translateY(5px)'; });
+}
+
+function open() {
+  // 1) 鲸鱼先鼓一下（像深吸一口气）
+  whale.style.transition = `transform ${T.pop}ms cubic-bezier(.2,.9,.3,1.4), filter ${T.pop}ms ease`;
+  whale.style.transform = 'scale(1.07)';
+  whale.style.filter = 'drop-shadow(0 0 13px rgba(77,107,254,.95))';
+  setTimeout(() => {
+    whale.style.transition = `transform 420ms cubic-bezier(.2,.8,.2,1), filter 600ms ease`;
+    whale.style.transform = 'scale(1)';
+    whale.style.filter = 'drop-shadow(0 0 9px rgba(77,107,254,.6))';
+  }, T.pop);
+
+  // 2) 双臂从鲸鱼身上伸出去，绕着面板走一圈
+  setTimeout(() => {
+    for (const p of [armL, armR]) {
+      p.style.transition = `stroke-dashoffset ${T.arms}ms cubic-bezier(.35,.75,.25,1)`;
+      p.style.strokeDashoffset = '0';
+    }
+  }, 70);
+
+  // 3) 玻璃在手臂合围时淡入
+  setTimeout(() => {
+    panel.style.transition = `opacity ${T.glass}ms ease 120ms, transform ${T.arms}ms cubic-bezier(.2,.8,.2,1)`;
+    panel.style.opacity = 1;
+    panel.style.transform = 'scale(1)';
+  }, 130);
+
+  // 4) 手臂落定后从亮蓝收成淡蓝（一直是同一条线，只是安静下来）
+  setTimeout(() => {
+    for (const p of [armL, armR]) {
+      p.style.transition = 'stroke 420ms ease, stroke-width 420ms ease, filter 420ms ease';
+      p.style.stroke = 'rgba(122,152,255,.55)';
+      p.style.strokeWidth = '1.25';
+      p.style.filter = 'drop-shadow(0 0 6px rgba(77,107,254,.28))';
+    }
+  }, 640);
+
+  // 5) 内容浮上来
+  items.forEach((el, i) => {
+    setTimeout(() => {
+      el.style.transition = `opacity ${T.content}ms ease, transform ${T.content}ms cubic-bezier(.2,.8,.2,1)`;
+      el.style.opacity = 1;
+      el.style.transform = 'translateY(0)';
+    }, 560 + i * 26);
+  });
+}
+
+function close() {
+  items.forEach((el, i) => {
+    setTimeout(() => {
+      el.style.transition = 'opacity 110ms ease';
+      el.style.opacity = 0;
+    }, i * 10);
+  });
+
+  setTimeout(() => {
+    panel.style.transition = 'opacity 200ms ease, transform 300ms ease';
+    panel.style.opacity = 0;
+    panel.style.transform = 'scale(.985)';
+  }, 70);
+
+  setTimeout(() => {
+    for (const p of [armL, armR]) {
+      p.style.transition = 'stroke-dashoffset 360ms cubic-bezier(.4,.75,.3,1), stroke 200ms ease, stroke-width 200ms ease, filter 200ms ease';
+      p.style.strokeDashoffset = p.dataset.len;
+      p.style.stroke = 'rgba(122,152,255,.95)';
+      p.style.strokeWidth = '1.7';
+      p.style.filter = 'none';
+    }
+    whale.style.transition = 'transform 240ms cubic-bezier(.2,.8,.2,1), filter 300ms ease';
+    whale.style.transform = 'scale(1)';
+    whale.style.filter = 'drop-shadow(0 0 7px rgba(77,107,254,.55))';
+  }, 110);
+}
+
+let isOpen = false, looping = false, timer = null;
+function toggle() { clearTimeout(timer); if (isOpen) { close(); isOpen = false; } else { open(); isOpen = true; } }
+
+document.getElementById('play').onclick = () => {
+  clearTimeout(timer); reset(); isOpen = false;
+  setTimeout(() => { open(); isOpen = true; }, 70);
+};
+whale.onclick = toggle;
+
+document.getElementById('loop').onchange = (e) => {
+  looping = e.target.checked;
+  clearTimeout(timer);
+  if (looping) tick();
+};
+function tick() {
+  if (!looping) return;
+  reset(); isOpen = false;
+  setTimeout(() => { open(); isOpen = true; }, 80);
+  timer = setTimeout(() => {
+    if (!looping) return;
+    close(); isOpen = false;
+    timer = setTimeout(tick, 1600);
+  }, 2400);
+}
+
+reset();
+setTimeout(() => { open(); isOpen = true; }, 420);
+</script>
+</body>
+</html>

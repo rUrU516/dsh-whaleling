@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>鲸鱼展开 · 动效草案</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: #0a0c10;
+    font: 13px/1.6 -apple-system, "PingFang SC", sans-serif;
+    color: #e8eaf0; -webkit-font-smoothing: antialiased;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 28px 0 40px;
+  }
+  h1 { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+  .hint { color: #7d8496; font-size: 11.5px; margin: 0 0 18px; }
+
+  .stage {
+    position: relative; width: 620px; height: 560px;
+    border-radius: 16px; overflow: hidden;
+    background:
+      radial-gradient(70% 60% at 30% 20%, #2b3444 0%, transparent 60%),
+      radial-gradient(60% 60% at 80% 80%, #24303a 0%, transparent 60%),
+      linear-gradient(140deg, #1a1f27, #0f1217);
+  }
+  /* 假的桌面背景，用来看玻璃 */
+  .fake-window {
+    position: absolute; left: 60px; top: 70px; width: 380px; height: 300px;
+    border-radius: 10px; padding: 18px;
+    background: linear-gradient(160deg, #f2f4f8, #dfe3ec);
+    color: #2a3140; font-size: 12px; line-height: 1.7;
+    box-shadow: 0 20px 50px rgba(0,0,0,.45);
+  }
+  .fake-window b { display: block; font-size: 13px; margin-bottom: 6px; }
+
+  /* ── 悬浮件 ─────────────────────────────── */
+  .seed {
+    position: absolute; left: 256px; top: 56px; width: 108px; height: 108px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .whale {
+    width: 66px; transform-origin: center;
+    filter: drop-shadow(0 0 6px rgba(77,107,254,.55));
+    will-change: transform, filter;
+  }
+  .ripple {
+    position: absolute; left: 50%; top: 50%; width: 90px; height: 90px;
+    margin: -45px 0 0 -45px; border-radius: 50%;
+    border: 1.5px solid rgba(120,150,255,.75);
+    opacity: 0; pointer-events: none;
+  }
+
+  /* 面板（初始隐藏，靠 JS 驱动） */
+  .panel {
+    position: absolute; left: 160px; top: 92px; width: 300px; height: 420px;
+    border-radius: 18px;
+    opacity: 0; transform: scale(.97); transform-origin: 50% 0%;
+    background: rgba(28,32,40,.62);
+    backdrop-filter: blur(26px) saturate(150%);
+    -webkit-backdrop-filter: blur(26px) saturate(150%);
+    box-shadow: 0 24px 60px rgba(0,0,0,.55), inset 0 0 0 .5px rgba(255,255,255,.10);
+    overflow: hidden; pointer-events: none;
+  }
+  /* 边框：从鲸鱼身上长出来的那圈 */
+  .frame {
+    position: absolute; left: 160px; top: 92px; width: 300px; height: 420px;
+    pointer-events: none; overflow: visible;
+  }
+  .frame path {
+    fill: none; stroke: rgba(120,150,255,.95); stroke-width: 1.6;
+    stroke-linecap: round;
+  }
+
+  .panel .content { padding: 40px 18px 18px; }
+  .row {
+    display: flex; align-items: center; gap: 8px;
+    height: 30px; padding: 0 8px; border-radius: 7px;
+    font-size: 12.5px; color: rgba(255,255,255,.9);
+    opacity: 0; transform: translateY(6px);
+  }
+  .row .t { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .d { color: rgba(255,255,255,.42); font-size: 11px; }
+  .row.active { color: #fff; }
+  .spin {
+    width: 13px; height: 13px; border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,.22);
+    border-top-color: rgba(255,255,255,.75);
+  }
+  .spin.go { animation: spin 1.05s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .dot { width: 13px; }
+  .group {
+    display: flex; align-items: center; gap: 7px; height: 26px;
+    margin: 8px 0 2px 0; padding: 0 8px;
+    font-size: 12px; color: rgba(255,255,255,.62);
+    opacity: 0; transform: translateY(6px);
+  }
+  .group svg { flex: none; }
+
+  /* 顶部那条收纳鲸鱼的“把手” */
+  .handle {
+    position: absolute; left: 0; top: 0; width: 300px; height: 38px;
+    display: flex; align-items: center; padding-left: 50px;
+    opacity: 0; pointer-events: none;
+  }
+  .handle .name {
+    font-size: 13px; font-weight: 600; color: rgba(255,255,255,.92);
+    letter-spacing: .2px;
+  }
+
+  .controls { display: flex; gap: 10px; margin-top: 16px; align-items: center; }
+  button {
+    appearance: none; border: 1px solid rgba(255,255,255,.16);
+    background: rgba(255,255,255,.07); color: #e8eaf0;
+    padding: 7px 16px; border-radius: 8px; font-size: 12.5px; cursor: pointer;
+  }
+  button:hover { background: rgba(255,255,255,.12); }
+  label { font-size: 12px; color: #8b90a0; display: flex; gap: 6px; align-items: center; }
+</style>
+</head>
+<body>
+  <h1>双击展开 · 鲸鱼吐出边框</h1>
+  <p class="hint">鲸鱼先鼓一下 → 一圈蓝边从它身上涨开、落成面板轮廓 → 鲸鱼缩到顶部变成收起把手。<br>点「重新播放」看完整一遍；勾循环会自己反复。</p>
+
+  <div class="stage">
+    <div class="fake-window">
+      <b>随便一个窗口</b>
+      用来验证玻璃：面板打开后，背后的内容应该被模糊而不是被遮住。<br>
+      这里的文字在面板后面会糊掉，边缘有折射感。
+    </div>
+
+    <svg class="frame" viewBox="0 0 300 420" preserveAspectRatio="none">
+      <path id="framePath" d="" />
+    </svg>
+
+    <div class="panel" id="panel">
+      <div class="handle" id="handle">
+        <span class="name">会话</span>
+      </div>
+      <div class="content">
+        <div id="rows"></div>
+      </div>
+    </div>
+
+    <div class="seed" id="seed">
+      <div class="ripple" id="ripple"></div>
+      <img class="whale" id="whale" src="assets/whale.png">
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="play">重新播放</button>
+    <label><input type="checkbox" id="loop"> 循环</label>
+  </div>
+
+<script>
+const framePath = document.getElementById('framePath');
+const panel = document.getElementById('panel');
+const whale = document.getElementById('whale');
+const ripple = document.getElementById('ripple');
+const seed = document.getElementById('seed');
+const handle = document.getElementById('handle');
+
+// 面板轮廓：圆角矩形，周长为 dash 动画做准备
+const W = 300, H = 420, R = 18;
+const rectPath = `M ${R} 0 H ${W - R} A ${R} ${R} 0 0 1 ${W} ${R} V ${H - R} ` +
+                 `A ${R} ${R} 0 0 1 ${W - R} ${H} H ${R} A ${R} ${R} 0 0 1 0 ${H - R} ` +
+                 `V ${R} A ${R} ${R} 0 0 1 ${R} 0 Z`;
+framePath.setAttribute('d', rectPath);
+const L = framePath.getTotalLength();
+framePath.style.strokeDasharray = `${L}`;
+framePath.style.strokeDashoffset = `${L}`;
+
+// 列表内容
+const rows = [
+  { group: 'dsh-plugin' },
+  { t: '插件进度与创造模式', d: '刚刚', active: true },
+  { t: '你好', d: '5小时' },
+  { t: '快捷键唤起悬浮聊天窗', d: '1天' },
+  { group: 'argus-algorithms' },
+  { t: '当前项目进度确认', d: '3分钟' },
+  { t: '在么?', d: '6小时' },
+  { t: '问候', d: '11小时' },
+];
+const list = document.getElementById('rows');
+rows.forEach((r) => {
+  if (r.group) {
+    const el = document.createElement('div');
+    el.className = 'group';
+    el.innerHTML = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+       stroke="currentColor" stroke-width="1.15" stroke-linejoin="round">
+       <path d="M1.6 3.7V10.8H5.1L6.5 9H12.4V3.7Z"/><path d="M0.9 6.7H10.2L12.5 2.7H3.2Z"/></svg>
+       <span>${r.group}</span>`;
+    list.appendChild(el);
+  } else {
+    const el = document.createElement('div');
+    el.className = 'row' + (r.active ? ' active' : '');
+    el.innerHTML = `<div class="dot">${r.active ? '<div class="spin go"></div>' : ''}</div>
+                    <div class="t">${r.t}</div><div class="d">${r.d}</div>`;
+    list.appendChild(el);
+  }
+});
+
+const items = [...list.children];
+const timings = { whalePop: 150, ripple: 520, frame: 560, panelFade: 320, moveWhale: 520, content: 260 };
+
+function reset() {
+  panel.style.opacity = 0;
+  panel.style.transform = 'scale(.97)';
+  panel.style.pointerEvents = 'none';
+  framePath.style.transition = 'none';
+  framePath.style.strokeDashoffset = `${L}`;
+  whale.style.transition = 'none';
+  whale.style.transform = 'scale(1)';
+  whale.style.filter = 'drop-shadow(0 0 6px rgba(77,107,254,.55))';
+  ripple.style.transition = 'none';
+  ripple.style.opacity = 0;
+  ripple.style.transform = 'scale(.4)';
+  handle.style.opacity = 0;
+  items.forEach(el => { el.style.transition = 'none'; el.style.opacity = 0; });
+}
+
+function open(instant) {
+  if (instant) { reset(); }
+
+  // 1) 鲸鱼鼓一下
+  whale.style.transition = `transform ${timings.whalePop}ms cubic-bezier(.2,.9,.3,1.4), filter ${timings.whalePop}ms ease`;
+  whale.style.transform = 'scale(1.10)';
+  whale.style.filter = 'drop-shadow(0 0 14px rgba(77,107,254,.95))';
+
+  // 2) 一圈涟漪涨开
+  ripple.style.transition = `transform ${timings.ripple}ms cubic-bezier(.15,.7,.2,1), opacity ${timings.ripple}ms ease-out`;
+  ripple.style.opacity = .9;
+  ripple.style.transform = 'scale(2.6)';
+  setTimeout(() => { ripple.style.opacity = 0; }, 180);
+
+  // 3) 边框从鲸鱼处“长”成面板轮廓
+  setTimeout(() => {
+    framePath.style.transition = `stroke-dashoffset ${timings.frame}ms cubic-bezier(.3,.8,.2,1)`;
+    framePath.style.strokeDashoffset = '0';
+  }, 90);
+  // 画完之后从亮蓝收成一道淡淡的蓝边
+  setTimeout(() => {
+    framePath.style.transition = 'stroke 420ms ease, stroke-width 420ms ease, filter 420ms ease';
+    framePath.style.stroke = 'rgba(120,150,255,.55)';
+    framePath.style.strokeWidth = '1.2';
+    framePath.style.filter = 'drop-shadow(0 0 6px rgba(77,107,254,.35))';
+  }, 640);
+
+  // 4) 玻璃淡入
+  setTimeout(() => {
+    panel.style.transition = `opacity ${timings.panelFade}ms ease, transform ${timings.frame}ms cubic-bezier(.2,.8,.2,1)`;
+    panel.style.opacity = 1;
+    panel.style.transform = 'scale(1)';
+    panel.style.pointerEvents = 'auto';
+  }, 120);
+
+  // 5) 鲸鱼本身缩到顶部，变成把手
+  setTimeout(() => {
+    whale.style.transition = `transform ${timings.moveWhale}ms cubic-bezier(.3,.9,.25,1), opacity 200ms ease 240ms`;
+    // 从 seed 中心 → 面板左上角把手位置
+    const seedRect = seed.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+    const dx = (panelRect.left + 27) - (seedRect.left + seedRect.width / 2);
+    const dy = (panelRect.top + 20) - (seedRect.top + seedRect.height / 2);
+    whale.style.transform = `translate(${dx}px, ${dy}px) scale(.27)`;
+    whale.style.filter = 'drop-shadow(0 0 4px rgba(77,107,254,.5))';
+  }, 220);
+
+  setTimeout(() => { handle.style.transition = 'opacity 220ms ease'; handle.style.opacity = 1; }, 420);
+
+  // 6) 内容依次浮上来
+  items.forEach((el, i) => {
+    setTimeout(() => {
+      el.style.transition = `opacity ${timings.content}ms ease, transform ${timings.content}ms cubic-bezier(.2,.8,.2,1)`;
+      el.style.opacity = 1;
+      el.style.transform = 'translateY(0)';
+    }, 500 + i * 28);
+  });
+}
+
+function close() {
+  items.forEach((el, i) => {
+    setTimeout(() => {
+      el.style.transition = `opacity 120ms ease`;
+      el.style.opacity = 0;
+    }, i * 12);
+  });
+  handle.style.opacity = 0;
+
+  setTimeout(() => {
+    panel.style.transition = 'opacity 180ms ease, transform 260ms ease';
+    panel.style.opacity = 0;
+    panel.style.transform = 'scale(.97)';
+  }, 80);
+
+  setTimeout(() => {
+    framePath.style.transition = 'stroke-dashoffset 320ms cubic-bezier(.4,.7,.3,1), stroke 200ms ease, stroke-width 200ms ease, filter 200ms ease';
+    framePath.style.strokeDashoffset = `${L}`;
+    framePath.style.stroke = 'rgba(120,150,255,.95)';
+    framePath.style.strokeWidth = '1.6';
+    framePath.style.filter = 'none';
+    whale.style.transition = 'transform 340ms cubic-bezier(.2,.8,.2,1), filter 340ms ease';
+    whale.style.transform = 'scale(1)';
+    whale.style.filter = 'drop-shadow(0 0 6px rgba(77,107,254,.55))';
+  }, 120);
+}
+
+let open_ = false, looping = false, timer = null;
+function play() { if (open_) { close(); open_ = false; } else { open(); open_ = true; } }
+
+document.getElementById('play').onclick = () => {
+  clearTimeout(timer);
+  reset();
+  open_ = false;
+  setTimeout(() => { open(true); open_ = true; }, 60);
+};
+
+document.getElementById('loop').onchange = (e) => {
+  looping = e.target.checked;
+  clearTimeout(timer);
+  if (looping) tick();
+};
+function tick() {
+  if (!looping) return;
+  reset(); open_ = false;
+  setTimeout(() => { open(true); open_ = true; }, 80);
+  timer = setTimeout(() => {
+    if (!looping) return;
+    close(); open_ = false;
+    timer = setTimeout(tick, 1500);
+  }, 2200);
+}
+
+// 点击鲸鱼也能手动开合
+whale.style.cursor = 'pointer';
+whale.onclick = () => { clearTimeout(timer); play(); };
+
+reset();
+setTimeout(() => { open(true); open_ = true; }, 400);
+</script>
+</body>
+</html>

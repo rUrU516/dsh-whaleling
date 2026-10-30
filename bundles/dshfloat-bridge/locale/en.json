@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "DshFloat Bridge",
+    "description": "Writes live session state to ~/.dsh/dshfloat-bridge.json for the floating widget."
+  }
+}
