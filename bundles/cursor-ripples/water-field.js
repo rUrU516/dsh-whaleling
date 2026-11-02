@@ -83,16 +83,22 @@ export class WaterField {
   }
 
   /**
-   * Advance exactly one 60 Hz tick. With L(u) = left+right+up+down-4*u:
+   * Advance exactly one 60 Hz tick. damping in [0,1], default .15.
+   * Higher values dissipate pointer-wave energy faster, not a fluid viscosity solver.
+   * With L(u) = left+right+up+down-4*u:
    * next = retention * (2*current - previous + 0.28*L(current)).
    * The squared Courant number 0.28 is below the 2-D five-point limit 0.5
-   * (Courant number sqrt(0.28) ~= 0.529). Interior retention is 0.985 per tick;
-   * the sponge lowers it smoothly to 0.8077 at the outermost cells.
+   * (Courant number sqrt(0.28) ~= 0.529). Interior retention is 1 - .1*damping;
+   * default .15 preserves 0.985 per tick and 0.8077 at outermost sponge cells.
    * Multiplying the whole recurrence also relaxes the mean height toward zero,
    * rather than leaving a permanent DC offset. Clipping is a last-resort bound
    * for strong/continuous forcing, not the mechanism for linear stability.
    */
-  step() {
+  step(damping = .15) {
+    if (!Number.isFinite(damping) || damping < 0 || damping > 1) {
+      throw new RangeError('damping must be a finite number between 0 and 1');
+    }
+    const retentionScale = (1 - .1 * damping) / INTERIOR_RETENTION;
     const { width, height, current } = this;
     const previous = this.#previous;
     const next = this.#next;
@@ -105,7 +111,7 @@ export class WaterField {
         const up = y > 0 ? current[index - width] : 0;
         const down = y + 1 < height ? current[index + width] : 0;
         const laplacian = left + right + up + down - 4 * center;
-        next[index] = clampHeight(this.#retention[index] *
+        next[index] = clampHeight((this.#retention[index] * retentionScale) *
           (2 * center - previous[index] + WAVE_COEFFICIENT * laplacian));
       }
     }

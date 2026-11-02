@@ -108,6 +108,43 @@ test('edge sponge removes more of an equal pulse than the interior', () => {
   assert.ok(edgeNeighbor < centerNeighbor, `${edgeNeighbor} < ${centerNeighbor}`);
 });
 
+test('higher damping dissipates an identical pulse faster without resetting its shape', () => {
+  const low = new WaterField(81, 81);
+  const high = new WaterField(81, 81);
+  for (const field of [low, high]) field.disturb(40, 40, 4, .6);
+  let lowEnergy = 0, highEnergy = 0;
+  for (let tick = 0; tick < 180; tick++) {
+    low.step(.02); high.step(.8);
+    if (tick >= 120) { lowEnergy += rms(low) ** 2; highEnergy += rms(high) ** 2; }
+  }
+  assert.ok(highEnergy < lowEnergy * .1, `${highEnergy} < ${lowEnergy} * .1`);
+  const before = low.current;
+  low.step(1);
+  assert.notEqual(low.current, before, 'changing damping advances existing state');
+  assert.ok(peak(low) > 0, 'changing damping does not clear the waves');
+});
+
+test('zero and maximum damping remain finite and bounded under repeated forcing', () => {
+  for (const damping of [0, 1]) {
+    const field = new WaterField(31, 27);
+    for (let tick = 0; tick < 1800; tick++) {
+      if (tick < 600) field.disturb(15 + Math.sin(tick) * 7, 13, 3, .5);
+      field.step(damping);
+      assert.ok(peak(field) <= 1);
+    }
+  }
+});
+
+test('damping default preserves original recurrence and invalid values are rejected', () => {
+  const field = new WaterField(25, 25);
+  field.disturb(12, 12, .5, .5);
+  field.step();
+  assert.ok(Math.abs(field.current[12 * 25 + 13] - .985 * .28 * .5) < 1e-7);
+  for (const damping of [-.1, 1.1, Infinity, NaN, '0.2', null]) {
+    assert.throws(() => field.step(damping), RangeError);
+  }
+});
+
 test('normal bytes use signed central differences, height, and opaque alpha', () => {
   const field = new WaterField(3, 3);
   // A plane h(x,y)=0.1*x-0.05*y, centered at the middle cell.

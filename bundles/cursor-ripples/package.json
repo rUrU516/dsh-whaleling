@@ -1,9 +1,12 @@
 {
   "name": "@local/dsh-cursor-ripples",
-  "version": "0.4.0",
+  "version": "0.7.0",
   "private": true,
-  "description": "Interactive ocean behind DSH content, with opaque reading surfaces and a version-specific background-layer adapter.",
-  "scripts": { "build": "node build.js", "test": "node --test water-field.test.js" },
+  "description": "Subtle ocean background with a live appearance settings page, custom colors, brightness and motion controls.",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node --test water-field.test.js appearance.test.js"
+  },
   "type": "module",
   "exports": {
     ".": "./index.js",
@@ -11,13 +14,39 @@
     "./locale/*.json": "./locale/*.json",
     "./icon": "./icon.svg"
   },
-  "files": ["index.js", "client.js", "client-entry.js", "water-field.js", "water-field.test.js", "ocean-renderer.js", "build.js", "cordis.patch.yml", "locale/*.json", "icon.svg", "README.md"],
+  "files": [
+    "index.js",
+    "client.js",
+    "client-entry.js",
+    "water-field.js",
+    "water-field.test.js",
+    "ocean-renderer.js",
+    "build.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "appearance.js",
+    "appearance-model.js",
+    "appearance.test.js",
+    "ocean-preview.js",
+    "settings-panel.js",
+    "buoy-icons.js"
+  ],
   "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
     "client": {
       "platform": "web",
       "immediately": true,
-      "inject": ["@deepseek-ai/dsh-client-ui-conversation"]
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-settings"
+      ]
     }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/schemastery": "~3.18.5"
   }
 }

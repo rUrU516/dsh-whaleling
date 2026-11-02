@@ -1,3 +1,4 @@
+import { APPEARANCE_DEFAULTS, tintRGB } from './appearance.js';
 /** Visible ocean artwork, mounted behind the application columns by the adapter. */
 export function createOceanRenderer(canvas, field) {
   const gl = canvas.getContext('webgl', {
@@ -37,6 +38,9 @@ export function createOceanRenderer(canvas, field) {
       uniform float aspect;
       uniform float time;
       uniform float darkMode;
+      uniform vec3 tintMultiplier;
+      uniform float brightness;
+      uniform float waveStrength;
       varying vec2 uv;
       float swell(vec2 p) {
         return sin(p.x * 2.7 + p.y * 1.9 - time * .47) * .34
@@ -52,7 +56,7 @@ export function createOceanRenderer(canvas, field) {
                           swell(p + vec2(0.0, e)) - h) / e;
         vec2 wake = (texture2D(water, vec2(uv.x, 1.0 - uv.y)).rg * 255.0 - 128.0) / 127.0;
         wake.y = -wake.y;
-        vec3 n = normalize(vec3(-slope * .21 - wake * 4.2, 1.0));
+        vec3 n = normalize(vec3((-slope * .21 - wake * 4.2) * waveStrength, 1.0));
         vec3 reflected = reflect(vec3(0.0, 0.0, -1.0), n);
         vec3 sun = normalize(vec3(-.33, .47, 1.0));
         float gloss = pow(max(dot(reflected, sun), 0.0), 48.0);
@@ -61,14 +65,15 @@ export function createOceanRenderer(canvas, field) {
         float caustic = sin(q.x * 13.0 + sin(q.y * 8.0 + time * .3))
                        * sin(q.y * 11.0 - sin(q.x * 7.0 - time * .27));
         caustic = pow(max(0.0, 1.0 - abs(caustic)), 14.0);
-        float trough = clamp(.5 + h * .28 + slope.x * .055, .12, .85);
-        vec3 deep = mix(vec3(.10, .34, .43), vec3(.035, .12, .18), darkMode);
-        vec3 shallow = mix(vec3(.32, .68, .72), vec3(.09, .34, .40), darkMode);
+        float trough = clamp(.5 + (h * .28 + slope.x * .055) * waveStrength, .12, .85);
+        vec3 deep = mix(vec3(.10, .34, .43), vec3(.055, .09, .11), darkMode);
+        vec3 shallow = mix(vec3(.32, .68, .72), vec3(.10, .22, .25), darkMode);
         vec3 color = mix(deep, shallow, trough);
         color += broad * vec3(.05, .10, .11);
-        color += gloss * vec3(.40, .48, .43);
+        color += gloss * vec3(.18, .23, .23);
         color += caustic * vec3(.03, .08, .08);
-        gl_FragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
+        // Small exposure lift only; leave wave contrast, alpha and component layers unchanged.
+        gl_FragColor = vec4(clamp(color * tintMultiplier * brightness + vec3(0.012), 0.0, 1.0), 1.0);
       }
     `);
     const program = gl.createProgram();
@@ -100,11 +105,14 @@ export function createOceanRenderer(canvas, field) {
     const timeLocation = gl.getUniformLocation(program, 'time');
     const aspectLocation = gl.getUniformLocation(program, 'aspect');
     const darkLocation = gl.getUniformLocation(program, 'darkMode');
+    const tintLocation = gl.getUniformLocation(program, 'tintMultiplier');
+    const brightnessLocation = gl.getUniformLocation(program, 'brightness');
+    const waveLocation = gl.getUniformLocation(program, 'waveStrength');
     const pixels = new Uint8Array(field.width * field.height * 4);
     gl.clearColor(0, 0, 0, 0);
     return {
       clear() { if (!gl.isContextLost()) gl.clear(gl.COLOR_BUFFER_BIT); },
-      draw(time, dark) {
+      draw(time, dark, settings) {
         if (gl.isContextLost()) return;
         field.writeNormals(pixels);
         gl.viewport(0, 0, canvas.width, canvas.height);
@@ -112,6 +120,11 @@ export function createOceanRenderer(canvas, field) {
         gl.uniform1f(timeLocation, time);
         gl.uniform1f(aspectLocation, canvas.width / canvas.height);
         gl.uniform1f(darkLocation, dark ? 1 : 0);
+        const rgb = tintRGB(settings.tint);
+        const base = tintRGB(APPEARANCE_DEFAULTS.tint);
+        gl.uniform3f(tintLocation, rgb[0] / base[0], rgb[1] / base[1], rgb[2] / base[2]);
+        gl.uniform1f(brightnessLocation, settings.brightness);
+        gl.uniform1f(waveLocation, settings.waveStrength);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       },
       dispose,
