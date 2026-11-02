@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Ocean Surface · Cursor Ripples",
+    "description": "Interactive waves behind the application, with opaque reading and control surfaces. Uses a background-layer adapter for the current DSH version."
+  }
+}

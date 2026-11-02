@@ -1,0 +1,4 @@
+- insert:
+    - id: cursor-ripples
+      name: '@local/dsh-cursor-ripples'
+      config: {}

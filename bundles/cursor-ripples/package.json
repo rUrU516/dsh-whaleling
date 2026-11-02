@@ -1,0 +1,23 @@
+{
+  "name": "@local/dsh-cursor-ripples",
+  "version": "0.4.0",
+  "private": true,
+  "description": "Interactive ocean behind DSH content, with opaque reading surfaces and a version-specific background-layer adapter.",
+  "scripts": { "build": "node build.js", "test": "node --test water-field.test.js" },
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": ["index.js", "client.js", "client-entry.js", "water-field.js", "water-field.test.js", "ocean-renderer.js", "build.js", "cordis.patch.yml", "locale/*.json", "icon.svg", "README.md"],
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": ["@deepseek-ai/dsh-client-ui-conversation"]
+    }
+  }
+}

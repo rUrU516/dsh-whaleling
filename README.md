@@ -13,6 +13,7 @@ A tiny floating whale for DeepSeek Harness (DSH).
 |---|---|
 | `float-icon/` | The widget: a standalone AppKit app (Swift, no Electron) |
 | `bundles/dshfloat-bridge/` | A DSH host plugin that exposes live session state to the widget |
+| [Ocean Surface · Cursor Ripples](./bundles/cursor-ripples/README.md) | An independent DSH UI experiment: ocean-blue theme, rolling WebGL waves and simulated pointer wakes |
 
 ## Build and run the widget
 
